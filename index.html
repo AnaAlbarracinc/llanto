@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js"></script>
+
+</head>
+<body>
+
+<script type="text/javascript">
+
+const URL = "https://teachablemachine.withgoogle.com/models/UBXHhr-W4/";
+let recognizer = null;
+let listening = false;
+
+// 🔥 Crear modelo (solo una vez)
+async function createModel() {
+    if (!recognizer) {
+        const checkpointURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        recognizer = speechCommands.create(
+            "BROWSER_FFT",
+            undefined,
+            checkpointURL,
+            metadataURL
+        );
+
+        await recognizer.ensureModelLoaded();
+    }
+    return recognizer;
+}
+
+// 🔥 Precargar modelo al abrir
+window.addEventListener("load", async () => {
+    await createModel();
+    window.AppInventor.setWebViewString("MODEL_READY");
+});
+
+// 🔥 Empezar a escuchar
+async function startListening() {
+
+    if (!recognizer) {
+        await createModel();
+    }
+
+    if (listening) return;
+
+    listening = true;
+
+    recognizer.listen(result => {
+
+        if (!listening) return;
+
+        const scores = result.scores;
+        const labels = recognizer.wordLabels();
+
+        let maxScore = 0;
+        let detectedClass = "";
+
+        for (let i = 0; i < labels.length; i++) {
+            if (scores[i] > maxScore) {
+                maxScore = scores[i];
+                detectedClass = labels[i];
+            }
+        }
+
+        if (maxScore > 0.4) {
+            window.AppInventor.setWebViewString(detectedClass);
+        }
+
+    }, {
+        probabilityThreshold: 0.4,
+        overlapFactor: 0.3,
+        invokeCallbackOnNoiseAndUnknown: false
+    });
+}
+
+// 🔥 Parar escucha
+function stopListening() {
+    listening = false;
+    if (recognizer) recognizer.stopListening();
+}
+
+</script>
+
+</body>
+</html>
+
