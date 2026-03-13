@@ -68,13 +68,13 @@ async function startListening() {
             }
         }
 
-        if (maxScore > 0.4) {
+        if (maxScore > 0.25) {
             window.AppInventor.setWebViewString(detectedClass);
         }
 
     }, {
-        probabilityThreshold: 0.4,
-        overlapFactor: 0.3,
+        probabilityThreshold: 0.25,
+        overlapFactor: 0.75,
         invokeCallbackOnNoiseAndUnknown: false
     });
 }
